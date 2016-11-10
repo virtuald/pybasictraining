@@ -7,9 +7,10 @@ if [ "$1" == "" ]; then
     exit 1
 fi
 
+TEST_PYTHONPATH=${TEST_PYTHONPATH:-../src}
 
 TESTNAME=test_challenges.py::test_$1
 shift
 
-cd `dirname $0`/tests/
-PYTHONPATH="../src" python3 -m pytest -l $@ $TESTNAME
+cd $(dirname $0)/tests/
+PYTHONPATH="${TEST_PYTHONPATH}" python3 -m pytest -l "$@" $TESTNAME
