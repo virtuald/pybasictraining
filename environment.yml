@@ -1,0 +1,7 @@
+name: example-environment
+channels:
+  - nodefaults
+  - conda-forge
+dependencies:
+  - python=3.5
+  - ipywidgets

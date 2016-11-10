@@ -1,27 +1,40 @@
-#
+#    
 # To legally & successfully complete the challenges, you MUST NOT change the
 # contents of this file!
 #
 
 import random
 
-import some_library
-
-_teapot_ret = random.random()
-some_library._retval['teapot'] = _teapot_ret
-
-# If you get an error here, then you didn't create a mycode.py
-# in the src directory, or there is an error in the file
-import mycode
-
 from inspect import cleandoc, getargspec, isclass, isfunction, ismethod, ismodule
 import pytest
+
+@pytest.fixture(scope='session')
+def mycode(some_library):
+    # If you get an error here, then you didn't create a mycode.py
+    # in the src directory, or there is an error in the file
+    import mycode
+    return mycode
+
+@pytest.fixture(scope='session')
+def teapot_ret():
+    return random.random()
+
+@pytest.fixture(scope='session')
+def some_library(teapot_ret):
+    import some_library
+    some_library._retval['teapot'] = teapot_ret
+    return some_library
+
+def skip_jupyter(f):
+    f._jupyter_skip = True
+    return f
 
 #
 # Starting out
 #
 
-def test_s1():
+@skip_jupyter
+def test_s1(mycode):
     '''Create a file called `mycode.py` in the `src` directory'''
     pass
 
@@ -29,17 +42,18 @@ def test_s1():
 # Variables
 #
 
-def test_v1():
+def test_v1(mycode):
     '''Define a variable named `x`, and make it equal to the number `3`'''
     assert hasattr(mycode, 'x')     # is x defined?
     assert mycode.x == 3            # is x equal to 3
 
-def test_v2():
+def test_v2(mycode):
+    '''Define a variable named `s`, and make it a string that says `I am a string`'''
     assert hasattr(mycode, 's')         # is s defined?
     assert isinstance(mycode.s, str)    # is it a string?
     assert mycode.s == 'I am a string'  # correct value?
 
-def test_v3():
+def test_v3(mycode):
     '''Define a variable named `b`, and make it equal to the boolean false value'''
     assert hasattr(mycode, 'b')         # is b defined?
     assert mycode.b is False            # is it False?
@@ -48,11 +62,11 @@ def test_v3():
 # Functions
 #
 
-def test_f1():
+def test_f1(mycode):
     '''Define a function called `do_something`'''
     assert isfunction(mycode.do_something)  # is there a function called 'do something'?
 
-def test_f2():
+def test_f2(mycode):
     '''`do_something` should take two parameters, `x1` and `x2`'''
     
     (args, varargs, keywords, defaults) = getargspec(mycode.do_something)
@@ -61,14 +75,14 @@ def test_f2():
     assert args[0] == 'x1'          # check for a parameter called 'x1'
     assert args[1] == 'x2'          # check for a parameter called 'x2'
 
-def test_f3():
+def test_f3(mycode):
     '''`do_something` should have a docstring that says "This does something"'''
     
     docstring = mycode.do_something.__doc__
     assert docstring is not None                        # does it have a docstring?
     assert cleandoc(docstring) == 'This does something' # check the docstring contents
     
-def test_f4():
+def test_f4(mycode):
     '''`do_something` should return the result of `x1` times `x2`'''
     
     assert mycode.do_something(2, 2) == 4      # 2 times 2 is 4
@@ -77,7 +91,7 @@ def test_f4():
         for j in range(0, 10):
             assert mycode.do_something(i, j) == i*j     # does it return an expected result?
 
-def test_f5():
+def test_f5(mycode):
     '''Define a function called `keyword_fn`, it should take a keyword argument
        called `keyword`, with a default value of `None`'''
     
@@ -91,7 +105,7 @@ def test_f5():
     assert defaults[0] == None              # default should be None
     
 
-def test_f6():
+def test_f6(mycode):
     '''If `keyword` is None, then `keyword_fn` should return the string 'No'.
        Otherwise, it should return the keyword argument plus `2`'''
     
@@ -102,7 +116,7 @@ def test_f6():
         assert mycode.keyword_fn(arg) == arg + 2    # return arg + 2
 
 
-def test_f7():
+def test_f7(mycode):
     '''Define a function called `return_many`, it should take three parameters'''
     
     assert hasattr(mycode, 'return_many')     # does `return_things` exist
@@ -113,7 +127,7 @@ def test_f7():
     assert len(args) == 3   # does `return_things` take two parameters?
 
 
-def test_f8():
+def test_f8(mycode):
     '''`return_many` should add '2' to each of the parameters, and return the
        three parameters as a tuple'''
     
@@ -124,7 +138,7 @@ def test_f8():
             for arg3 in range(50):
                 assert mycode.return_many(arg1, arg2, arg3) == (arg1+2, arg2+2, arg3+2)   # is math correct?
 
-def test_f9():
+def test_f9(mycode):
     '''Call `return_many` with the parameters 1, 2, and 3, and assign the returned
        values to the variables r1, r2, and r3'''
     
@@ -136,23 +150,23 @@ def test_f9():
 # Modules
 #
 
-def test_m1():
+def test_m1(mycode, some_library):
     '''Import the library called `some_library`'''
     
     assert hasattr(mycode, 'some_library')      # is some_library in the module?
     assert ismodule(mycode.some_library)        # is it a module?
     assert mycode.some_library is some_library  # is it the same module? 
     
-def test_m2():
+def test_m2(mycode, some_library, teapot_ret):
     '''Call the `i_am_a_teapot` function inside of `some_library`, store its
        return value in a variable called `teapot`'''
        
     assert some_library._called['teapot'] == True   # if not True, the i_am_a_teapot function was never called
        
     assert hasattr(mycode, 'teapot')        # is teapot defined?
-    assert mycode.teapot is _teapot_ret     # is it the expected value?
+    assert mycode.teapot is teapot_ret     # is it the expected value?
 
-def test_m3():
+def test_m3(mycode):
     '''Define a function called `gonna_call_stuff`, and have it take a
        single parameter'''
     
@@ -162,7 +176,7 @@ def test_m3():
     assert len(args) == 1   # does `gonna_call_stuff` take a single parameter?
     
     
-def test_m4():
+def test_m4(mycode, some_library):
     '''From the `gonna_call_stuff` function, call the `multiply_by_2` function
       in the `some_library` library with the first parameter equal to the first
       parameter of the `gonna_call_stuff` function, and return the value returned by
@@ -175,26 +189,26 @@ def test_m4():
 # Tuples
 #
 
-def test_t1():
+def test_t1(mycode):
     '''Define a variable `t1`, and make it equal to an empty tuple'''
 
     assert isinstance(mycode.t1, tuple)     # is it a tuple?
     assert len(mycode.t1) == 0              # it shouldn't have any elements
 
-def test_t2():
+def test_t2(mycode):
     '''Define a variable `t2`, and make it equal to a tuple containing the value False'''
 
     assert isinstance(mycode.t2, tuple)     # is it a tuple?
     assert len(mycode.t2) == 1              # tuple of length 1
     assert mycode.t2[0] is False            # 0th element is False
 
-def test_t3():
+def test_t3(mycode):
     '''Define a variable `t3`, and make it equal to a tuple containing 32000 elements'''
 
     assert isinstance(mycode.t3, tuple)     # is it a tuple?
     assert len(mycode.t3) == 32000          # is it 32000 elements long?
 
-def test_t4():
+def test_t4(mycode):
     '''Define a variable `t4`, and make it equal to a tuple containing the values 'foo', 1,
        and False in it (in that order).'''
 
@@ -203,12 +217,12 @@ def test_t4():
     assert mycode.t4[1] is 1                # check 1st element
     assert mycode.t4[2] is False            # check 2nd element
 
-def test_t5():
+def test_t5(mycode):
     '''Define a variable `t5`, and make it equal to the 0th element of `t4`'''
 
     assert mycode.t5 is mycode.t4[0]        # t must be equal to the 0th element of t4
 
-def test_t6():
+def test_t6(mycode):
     '''Define a function called `measure_tuple`, that takes a single parameter'''
 
     assert isfunction(mycode.measure_tuple)  # is there a function called 'measure_tuple'?
@@ -217,7 +231,7 @@ def test_t6():
     assert len(args) == 1   # does `measure_tuple` take a single parameter?
 
 
-def test_t7():
+def test_t7(mycode):
     '''`measure_tuple` should return the number of elements present in the tuple'''
 
     assert mycode.measure_tuple(()) == 0
@@ -226,7 +240,7 @@ def test_t7():
         assert mycode.measure_tuple((True,)*i) == i
 
 
-def test_t8():
+def test_t8(mycode):
     '''Define a function called `sum_tuple`, that takes a single parameter'''
 
     assert isfunction(mycode.sum_tuple)  # is there a function called 'sum_tuple'?
@@ -234,7 +248,7 @@ def test_t8():
     
     assert len(args) == 1   # does `sum_tuple` take a single parameter?
 
-def test_t9():
+def test_t9(mycode):
     '''In `sum_tuple`, the parameter is a tuple. If there are 5 elements in
        the tuple, return the sum of the elements in the tuple. Otherwise, return None.'''
 
@@ -248,26 +262,26 @@ def test_t9():
 # Lists
 #
 
-def test_l1():
+def test_l1(mycode):
     '''Define a variable `l1`, and make it equal to an empty list'''
 
     assert isinstance(mycode.l1, list)      # is it a list?
     assert len(mycode.l1) == 0              # it shouldn't have any elements
 
-def test_l2():
+def test_l2(mycode):
     '''Define a variable `l2`, and make it equal to a list containing the value False'''
 
     assert isinstance(mycode.l2, list)     # is it a list?
     assert len(mycode.l2) == 1              # list of length 1
     assert mycode.l2[0] is False            # 0th element is False
 
-def test_l3():
+def test_l3(mycode):
     '''Define a variable `l3`, and make it equal to a list containing 32000 elements'''
 
     assert isinstance(mycode.l3, list)      # is it a list?
     assert len(mycode.l3) == 32000          # is it 32000 elements long?
 
-def test_l4():
+def test_l4(mycode):
     '''Define a variable `l4`, and make it equal to a list containing the values 'foo', 1,
        and False in it (in that order).'''
 
@@ -276,12 +290,12 @@ def test_l4():
     assert mycode.l4[1] is 1                # check 1st element
     assert mycode.l4[2] is False            # check 2nd element
 
-def test_l5():
+def test_l5(mycode):
     '''Define a variable `l5`, and make it equal to the 0th element of `l4`'''
 
     assert mycode.l5 is mycode.l4[0]        # l5 must be equal to the 0th element of l4
 
-def test_l6():
+def test_l6(mycode):
     '''Define a function called `measure_list`, that takes a single parameter'''
 
     assert isfunction(mycode.measure_list)  # is there a function called 'measure_list'?
@@ -290,7 +304,7 @@ def test_l6():
     assert len(args) == 1   # does `measure_list` take a single parameter?
 
 
-def test_l7():
+def test_l7(mycode):
     '''`measure_list` should return the number of elements present in the list'''
 
     assert mycode.measure_list(()) == 0
@@ -299,7 +313,7 @@ def test_l7():
         assert mycode.measure_list((True,)*i) == i
 
 
-def test_l8():
+def test_l8(mycode):
     '''Define a function called `sum_list`, that takes a single parameter'''
 
     assert isfunction(mycode.sum_list)  # is there a function called 'sum_list'?
@@ -307,7 +321,7 @@ def test_l8():
     
     assert len(args) == 1   # does `sum_list` take a single parameter?
 
-def test_l9():
+def test_l9(mycode):
     '''In `sum_list`, the parameter is a list. If there are 5 elements in
        the list, return the sum of the elements in the list. Otherwise, return None.'''
 
@@ -318,7 +332,7 @@ def test_l9():
     assert mycode.sum_list((1,2,3,4,5)) == 15
 
 
-def test_l10():
+def test_l10(mycode):
     '''Define a function called `wopit` that takes a single parameter, and
       returns None. The parameter is a list. Add the first element of the list to the
       end of the list. Do nothing if the list is empty.'''
@@ -332,7 +346,7 @@ def test_l10():
     mycode.wopit(l10_2)
     assert l10_2 == []
 
-def test_l11():
+def test_l11(mycode):
     '''Define a function called `bopit` that takes a single parameter, and
        returns None. The parameter is a list. Remove an item from the end of the list.
        Do nothing if the list is empty.'''
@@ -345,7 +359,7 @@ def test_l11():
     mycode.bopit(l11_2)
     assert l11_2 == []
 
-def test_l12():
+def test_l12(mycode):
     '''Define a function called `mopit` that takes a single parameter, and
        returns None. The parameter is a list. Remove an item from the beginning
        of the list. Do nothing if the list is empty.'''
@@ -358,7 +372,7 @@ def test_l12():
     mycode.mopit(l12_2)
     assert l12_2 == []
 
-def test_l13():
+def test_l13(mycode):
     '''Define a function called `zopit` that takes a single parameter. The
        parameter is a list. Return True if there is an element in the list that is
        equal to the string `item`, and the element position in the list is greater
@@ -384,14 +398,14 @@ def test_l13():
 # Dictionaries
 #
 
-def test_d1():
+def test_d1(mycode):
     '''Define a variable `d1`, and make it equal to an empty dictionary'''
 
     assert isinstance(mycode.d1, dict)      # is it a dictionary?
     assert len(mycode.d1.keys()) == 0       # is it empty?
 
-def test_d2():
-    '''Define a variable `d2`, ane make it a dictionary with the following
+def test_d2(mycode):
+    '''Define a variable `d2`, and make it a dictionary with the following
     key/value pairs: key: 'k1', value: 'item'; key: 'k2', value: a tuple with
     the elements 1 and 2. '''
 
@@ -404,13 +418,13 @@ def test_d2():
     assert t[0] is 1
     assert t[1] is 2
 
-def test_d3():
+def test_d3(mycode):
     '''Define a variable `d3` that is equal to the value stored in the
     dictionary with key `k2`'''
 
     assert mycode.d3 is mycode.d2.get('k2')
 
-def test_d4():
+def test_d4(mycode):
     '''Define a function called `superd` that takes a single parameter. The
       parameter is a dictionary. Add 10000 elements to the dictionary, with the
       keys numbers 1 - 10000. The values associated with each key is the key as
@@ -430,18 +444,18 @@ def test_d4():
 # Classes & Objects
 #
 
-def test_c1():
+def test_c1(mycode):
     '''Define a class called `MyClass`'''
 
     assert isclass(mycode.MyClass)  # has the class been defined?
 
-def test_c2():
+def test_c2(mycode):
     '''Add a class variable to `MyClass` called `clsvar`, equal to the value 3'''
 
     assert hasattr(mycode.MyClass, 'clsvar')  # class variable exist?
     assert mycode.MyClass.clsvar is 3         # is it 3?
 
-def test_c3():
+def test_c3(mycode):
     """Define a constructor method for `MyClass`, taking a single parameter.
        The parameter must be set as an instance variable (also called an 'attribute')
        called 'instvar'. If the parameter is equal to the string 'Hi', then the
@@ -457,7 +471,7 @@ def test_c3():
     m = mycode.MyClass('Hi')
     assert m.instvar == 'Hello'     # Follow instructions?
 
-def test_c4():
+def test_c4(mycode):
     '''In `MyClass`, define a method called 'add5', which takes a single
       parameter. The method must add the number 5 to the parameter, and add the
       result to the instance parameter 'instvar'. If `instvar` is greater than
@@ -493,7 +507,7 @@ def test_c4():
             else:
                 assert r == False
 
-def test_c5():
+def test_c5(mycode):
     '''In `MyClass`, define a property method called `prop` which must always
        return the string 'hi'.'''
 
@@ -503,7 +517,7 @@ def test_c5():
     m = mycode.MyClass(1)
     assert m.prop == 'hi'
 
-def test_c6():
+def test_c6(mycode):
     '''In `MyClass`, when the `prop` property is set, it must set an instance
        variable called '_prop' to the value it was set to'''
 
@@ -523,7 +537,7 @@ def test_c6():
         m.prop = i
         assert m._prop == i
 
-def test_c7():
+def test_c7(mycode):
     '''In `MyClass`, define two functions, `a` (taking a single parameter)
        and `b` (taking no parameters). When `b` is called, it must return the value
        that was passed to the `a` function. If the `a` function was never called,
@@ -544,7 +558,7 @@ def test_c7():
 
 
 
-def test_c8():
+def test_c8(mycode):
     '''Create an instance of `MyClass` and assign it to a variable called
       `mine`. Create another instance of `MyClass` and assign it to a variable
       called `mine2`'''
@@ -564,12 +578,12 @@ def test_c8():
 # State Machine
 #
 
-def test_sm1():
+def test_sm1(mycode):
     '''Define a class called `StateMachine`'''
 
     assert isclass(mycode.StateMachine)     # has the class been defined?
 
-def test_sm2():
+def test_sm2(mycode):
     '''The constructor for `StateMachine` will receive a single argument,
        which is a string indicating which state to start in. A readonly property
        of the `StateMachine` class called `state` must be defined, which will
@@ -589,7 +603,7 @@ def test_sm2():
         assert sm.state == str(i)
 
 
-def test_sm3():
+def test_sm3(mycode):
     '''Define a method of `StateMachine` called `reset`. If this method
        is called, the current state must be set to the 'init' state.'''
 
@@ -659,7 +673,7 @@ def run_the_test(sm, initial_state):
     assert ret == True          # the param is True, state is 'init', must return True
 
 
-def test_sm4():
+def test_sm4(mycode):
     '''Define a method of `StateMachine` called `process`. It must take a
        single parameter (referred to below as `sensed`), which can be True or False.
        The `process` method will be called over and over again, and must follow
@@ -680,7 +694,7 @@ def test_sm4():
         for _ in run_the_test(sm, 'init'):
             pass
 
-def test_sm5():
+def test_sm5(mycode):
     '''This challenge is a more comprehensive test of the state machine'''
 
     for init_state in ['init', 'running', 'slowing']:
