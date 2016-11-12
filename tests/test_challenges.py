@@ -16,13 +16,8 @@ def mycode(some_library):
     return mycode
 
 @pytest.fixture(scope='session')
-def teapot_ret():
-    return random.random()
-
-@pytest.fixture(scope='session')
-def some_library(teapot_ret):
+def some_library():
     import some_library
-    some_library._retval['teapot'] = teapot_ret
     return some_library
 
 def skip_jupyter(f):
@@ -157,14 +152,15 @@ def test_m1(mycode, some_library):
     assert ismodule(mycode.some_library)        # is it a module?
     assert mycode.some_library is some_library  # is it the same module? 
     
-def test_m2(mycode, some_library, teapot_ret):
+def test_m2(mycode, some_library):
     '''Call the `i_am_a_teapot` function inside of `some_library`, store its
        return value in a variable called `teapot`'''
        
     assert some_library._called['teapot'] == True   # if not True, the i_am_a_teapot function was never called
-       
+    some_library._called['teapot'] = False
+     
     assert hasattr(mycode, 'teapot')        # is teapot defined?
-    assert mycode.teapot is teapot_ret     # is it the expected value?
+    assert mycode.teapot is some_library._retval['teapot']     # is it the expected value?
 
 def test_m3(mycode):
     '''Define a function called `gonna_call_stuff`, and have it take a
@@ -184,6 +180,8 @@ def test_m4(mycode, some_library):
     
     assert mycode.gonna_call_stuff(999) == 999*3        # see if gonna_call_stuff returns the right value
     assert some_library._called['multiply'] == True     # If not true, the multiply_by_2 function wasn't called
+
+    some_library._called['multiply'] = False
 
 #
 # Tuples

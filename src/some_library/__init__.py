@@ -4,7 +4,7 @@
 #
 
 _retval = {
-    'teapot': True
+    'teapot': object()
 }
 
 _called = {

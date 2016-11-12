@@ -87,9 +87,15 @@ class CodeExecutor:
         print("Running challenge", test)
         
         if test == 'all':
-            pytest.main(['--color=yes', 'tests/test_challenges.py'])
+            retval = pytest.main(['--color=yes', 'tests/test_challenges.py'])
         else:
-            pytest.main(['--color=yes', 'tests/test_challenges.py::test_%s' % test])
+            retval = pytest.main(['--color=yes', 'tests/test_challenges.py::test_%s' % test])
+            
+        print()
+        if retval == 0:
+            print("Challenge completed! :)")
+        else:
+            print("Nope. Try again!")
 
 
 def show():
